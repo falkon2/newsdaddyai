@@ -1,115 +1,248 @@
-import Image from "next/image";
-import { Geist, Geist_Mono } from "next/font/google";
+import { GetServerSideProps } from 'next';
+import { useEffect, useState, useCallback } from 'react';
+import { NewsArticle } from '@/types/news';
+import { getAllArticles, getTrendingArticles, getArticlesByTags } from '@/services/api';
+import FeaturedArticle from '@/components/news/featured-article';
+import ArticleCard from '@/components/news/article-card';
+import TagsFilter from '@/components/news/tags-filter';
+import GenerateArticleButton from '@/components/news/generate-article-button';
+import { TextGenerateEffect } from '@/components/ui/text-generate-effect';
+import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
+import ScrollableNewsFeed from '@/components/news/scrollable-news-feed';
+import { NewsFocusCards } from '@/components/ui/news-focus-cards';
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
+interface HomeProps {
+  initialArticles: NewsArticle[];
+  trendingArticles: NewsArticle[];
+}
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+export default function Home({ initialArticles, trendingArticles }: HomeProps) {
+  const [articles, setArticles] = useState<NewsArticle[]>(initialArticles);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0); // Used to trigger data refresh
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
 
-export default function Home() {
+  // Featured article is the first trending article or first regular article
+  const featuredArticle = 
+    trendingArticles?.length > 0 
+      ? trendingArticles[0] 
+      : articles.length > 0 
+        ? articles[0] 
+        : null;
+  
+  // Articles to display in the grid (excluding the featured one)
+  const displayArticles = selectedTags.length > 0
+    ? articles.filter(article => 
+        article.tags.some(tag => selectedTags.includes(tag))
+      )
+    : articles;
+  
+  // Filter articles when tags change
+  useEffect(() => {
+    const fetchFilteredArticles = async () => {
+      if (selectedTags.length > 0) {
+        setLoading(true);
+        try {
+          // Using the getArticlesByTags API to fetch filtered articles
+          const filtered = await getArticlesByTags(selectedTags);
+          setArticles(filtered);
+          setPage(1); // Reset pagination when filters change
+          setHasMore(filtered.length >= 10); // Assuming 10 per page
+        } catch (error) {
+          console.error('Error fetching filtered articles:', error);
+          // Fallback to client-side filtering if API call fails
+          const filtered = initialArticles.filter(article => 
+            article.tags.some(tag => selectedTags.includes(tag))
+          );
+          setArticles(filtered);
+          setHasMore(false); // Can't load more with client filtering
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        setArticles(initialArticles);
+        setPage(1);
+        setHasMore(initialArticles.length >= 10);
+      }
+    };
+    
+    fetchFilteredArticles();
+  }, [selectedTags, initialArticles, refreshKey]);
+
+  // Function to refresh articles
+  const refreshArticles = async () => {
+    setLoading(true);
+    try {
+      const [newArticles, newTrending] = await Promise.all([
+        getAllArticles(),
+        getTrendingArticles()
+      ]);
+      setArticles(newArticles);
+      setPage(1);
+      setHasMore(newArticles.length >= 10);
+      // Increment refreshKey to force a re-render
+      setRefreshKey(prev => prev + 1);
+    } catch (error) {
+      console.error('Error refreshing articles:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // Function to load more articles for infinite scrolling
+  const loadMoreArticles = useCallback(async () => {
+    if (!hasMore || loading) return;
+    
+    try {
+      setLoading(true);
+      // In a real implementation, you would fetch the next page
+      // For now, we're simulating by waiting and not adding new articles
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Example of how you would implement:
+      // const nextPage = await getAllArticles(page + 1);
+      // if (nextPage.length > 0) {
+      //   setArticles(prev => [...prev, ...nextPage]);
+      //   setPage(prev => prev + 1);
+      //   setHasMore(nextPage.length >= 10);
+      // } else {
+      //   setHasMore(false);
+      // }
+      
+      // For demo purposes, just disable loading more
+      setHasMore(false);
+    } catch (error) {
+      console.error('Error loading more articles:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [hasMore, loading, page]);
+
   return (
-    <div
-      className={`${geistSans.className} ${geistMono.className} grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]`}
-    >
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/pages/index.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+    <div className="space-y-12">
+      {/* Hero section with featured article */}
+      <section className="py-6">
+        <div className="text-center mb-8">
+          <h1 className="text-4xl md:text-5xl font-bold mb-4">
+            <TextGenerateEffect words="Integrity News" />
+          </h1>
+          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+            Satirical AI-powered news that cuts through the noise with a sharp edge of humor and truth.
+          </p>
+          
+          {/* Generate Article Button */}
+          <div className="mt-6">
+            <GenerateArticleButton 
+              onSuccess={refreshArticles}
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+        
+        {featuredArticle ? (
+          <FeaturedArticle article={featuredArticle} />
+        ) : (
+          <div className="w-full h-[500px] rounded-2xl bg-muted animate-pulse" />
+        )}
+      </section>
+      
+      <Separator />
+      
+      {/* Articles section */}
+      <section>
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold">Latest Articles</h2>
+        </div>
+        
+        <TagsFilter 
+          selectedTags={selectedTags} 
+          onTagSelect={setSelectedTags} 
+        />
+        
+        {loading && displayArticles.length === 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="flex flex-col space-y-3">
+                <Skeleton className="h-[200px] w-full rounded-xl" />
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-full" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : displayArticles.length > 0 ? (
+          <ScrollableNewsFeed 
+            articles={displayArticles} 
+            loadMore={loadMoreArticles}
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        ) : (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">
+              {selectedTags.length > 0 
+                ? "No articles found with the selected tags. Try selecting different tags."
+                : "No articles available. Check back later for fresh content."}
+            </p>
+          </div>
+        )}
+      </section>
+      
+      {/* Trending section */}
+      {trendingArticles?.length > 0 && (
+        <>
+          <Separator />
+          <section>
+            <h2 className="text-2xl font-bold mb-6">Trending Now</h2>
+            
+            {/* Trending focus cards */}
+            <div className="mb-8">
+              <NewsFocusCards 
+                articles={trendingArticles.slice(0, 5)} 
+              />
+            </div>
+          </section>
+        </>
+      )}
     </div>
   );
 }
+
+export const getServerSideProps: GetServerSideProps = async () => {
+  try {
+    // Fetch initial articles and trending articles in parallel
+    const [initialArticles, trendingArticles] = await Promise.all([
+      getAllArticles(),
+      getTrendingArticles(),
+    ]);
+
+    // Add fake IDs for development if they don't exist
+    const articlesWithIds = initialArticles.map((article, index) => ({
+      ...article,
+      id: article.id || `article-${index}`,
+    }));
+
+    const trendingWithIds = trendingArticles.map((article, index) => ({
+      ...article,
+      id: article.id || `trending-${index}`,
+    }));
+
+    return {
+      props: {
+        initialArticles: articlesWithIds,
+        trendingArticles: trendingWithIds,
+      },
+    };
+  } catch (error) {
+    console.error('Error fetching data:', error);
+    
+    // Return empty arrays as fallback
+    return {
+      props: {
+        initialArticles: [],
+        trendingArticles: [],
+      },
+    };
+  }
+};
