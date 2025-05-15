@@ -1,40 +1,103 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/pages/api-reference/create-next-app).
+# Integrity News - AI-Powered Satirical News Platform
+
+A modern, responsive news platform built with Next.js, Tailwind CSS, and Aceternity UI components. This frontend connects to the [Integrity Project backend](https://github.com/nyujuzer/integrityproject) to deliver AI-generated satirical news articles.
+
+## Features
+
+- **Beautiful UI**: Built with Aceternity UI, Tailwind CSS, and Magic UI components
+- **Responsive Design**: Looks great on all devices, from mobile to desktop
+- **Server-Side Rendering**: Fast loading times with Next.js SSR
+- **Dark Mode Support**: Elegant dark mode implementation
+- **Trending Articles**: See what's popular right now
+- **Focus Cards**: Interactive, snapping cards for featured content
+- **Smooth Scrolling**: Lenis-powered smooth scroll for a premium feel
+- **Infinite Scrolling**: Load more content as you browse
+- **Animation on Scroll**: Elements animate into view as you scroll
+- **Tag Filtering**: Find articles by topic
+- **User Accounts**: Personalized content based on user preferences
+- **AI Article Generation**: Generate new satirical articles with one click
+
+## Tech Stack
+
+- **Frontend Framework**: Next.js
+- **Styling**: Tailwind CSS
+- **UI Components**: Aceternity UI, Shadcn UI
+- **Animation**: Framer Motion
+- **Smooth Scrolling**: Lenis
+- **Carousel**: Embla Carousel
+- **Package Manager**: Bun
+- **Backend Integration**: API services connected to the Integrity Project backend
 
 ## Getting Started
 
-First, run the development server:
+For detailed setup instructions, including how to set up the backend and use the article generation feature, see [SETUP.md](./docs/SETUP.md).
+
+### Quick Start
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
+# Install dependencies
+bun install
+
+# Start the development server
 bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Getting Started
 
-You can start editing the page by modifying `pages/index.tsx`. The page auto-updates as you edit the file.
+### Prerequisites
 
-[API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.ts`.
+- Bun (for package management)
+- Node.js (v18 or higher recommended)
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) instead of React pages.
+### Installation
 
-This project uses [`next/font`](https://nextjs.org/docs/pages/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Clone the repository:
 
-## Learn More
+```bash
+git clone https://your-repository-url/integrity.git
+cd integrity
+```
 
-To learn more about Next.js, take a look at the following resources:
+2. Install dependencies:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn-pages-router) - an interactive Next.js tutorial.
+```bash
+bun install
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+3. Create a `.env.local` file based on `.env.example` and set your environment variables:
 
-## Deploy on Vercel
+```bash
+cp .env.example .env.local
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+4. Start the development server:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/pages/building-your-application/deploying) for more details.
+```bash
+bun run dev
+```
+
+5. Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+### Connecting to the Backend
+
+This frontend is designed to work with the [Integrity Project backend](https://github.com/nyujuzer/integrityproject). Make sure the backend is running and accessible at the URL specified in your `.env.local` file.
+
+## Building for Production
+
+```bash
+bun run build
+bun run start
+```
+
+## Project Structure
+
+- `src/components` - UI components organized by feature
+- `src/pages` - Next.js pages and API routes
+- `src/services` - API service functions for backend communication
+- `src/styles` - Global styles and Tailwind configuration
+- `src/types` - TypeScript type definitions
+- `src/utils` - Utility functions
+
+## License
+
+[MIT](LICENSE)
